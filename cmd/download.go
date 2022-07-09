@@ -50,6 +50,11 @@ var downloadTHCmd = &cobra.Command{
 	Long:  `Red is not downloaded already, green is downloaded already. You can redownload a town hall level by selecting it, and it will be downloaded again overwriting the old data.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
+		client, err = coc.New(map[string]string{"dummy1@yopmail.com": "Password"})
+		if err != nil {
+			return err
+		}
+
 		th_level, err = renderViewOfThs()
 		if err != nil {
 			log.Log.Errorf("Error rendering view of ths: %v", err)
@@ -67,7 +72,15 @@ var downloadTHCmd = &cobra.Command{
 		log.Log.Info("Downloading th" + strconv.Itoa(th_level) + " data")
 
 		WgetTags()
+		WgetAchievements()
 
+		fp := fmt.Sprintf("players-th%d.json", th_level)
+		err = saveToFile(fp)
+		if err != nil {
+			log.Log.Errorf("Error saving to file %s: %v", fp, err)
+			return err
+		}
+		log.Log.Info("Done downloading th" + strconv.Itoa(th_level) + " data")
 		return nil
 	},
 }
