@@ -67,10 +67,14 @@ var mainStatsCmd = &cobra.Command{
 
 func renderAchievementSelection() (string, error) {
 	achievements := []string{
+		"Aggressive Capitalism",
 		"Anti-Artillery",
 		"Bust This!",
 		"Clan War Wealth",
+		"Elixir Escapade",
 		"Firefighter",
+		"Gold Grab",
+		"Most Valuable Clanmate",
 		"Not So Easy This Time",
 		"Shattered and Scattered",
 		"X-Bow Exterminator",
@@ -124,8 +128,8 @@ func renderCompareAchievement(achievement string) error {
 				continue
 			}
 			c := CollapsedPlayerStruct{
-				Name: player.Name,
-				Tag:  string(player.Tag),
+				Name:                      player.Name,
+				Tag:                       string(player.Tag),
 				TH:                        player.TownHallLevel,
 				AchievementName:           _achievement.Name,
 				AchievementCompletionInfo: _achievement.CompletionInfo,

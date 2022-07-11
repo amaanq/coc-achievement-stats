@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/amaanq/coc.go v0.0.0-20220614045408-2f58b29b7b22
 	github.com/go-resty/resty/v2 v2.7.0
+	github.com/joho/godotenv v1.4.0
 	github.com/manifoldco/promptui v0.9.0
 	github.com/spf13/cobra v1.5.0
 	github.com/withmandala/go-log v0.1.0

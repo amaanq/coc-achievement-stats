@@ -7,9 +7,11 @@ package cmd
 import (
 	"os"
 
+	"github.com/amaanq/coc-achievement-stats/log"
+	"github.com/amaanq/coc.go"
+	"github.com/joho/godotenv"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
-	"github.com/amaanq/coc.go"
 )
 
 // var (
@@ -73,8 +75,20 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	var err error 
-	client, err = coc.New(map[string]string{"dummy1@yopmail.com": "Password"})
+	var err error
+
+	// load dotenv
+	err = godotenv.Load()
+	if err != nil {
+		log.Log.Errorf("Error loading .env file: %v", err)
+	}
+
+	if os.Getenv("email") == "" || os.Getenv("password") == "" {
+		log.Log.Error("You must set your email and password in the .env file")
+		os.Exit(1)
+	}
+
+	client, err = coc.New(map[string]string{os.Getenv("email"): os.Getenv("password")})
 	if err != nil {
 		panic(err)
 	}

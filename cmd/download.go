@@ -107,6 +107,11 @@ func renderViewOfThs(_prompt string) (int, error) {
 
 	// missing ths should have whats in range and not in ths
 	for _, th := range _range {
+		if th == -1 {
+			all_ths = append(all_ths, "Exit")
+			continue
+		}
+
 		if !contains(ths, th) {
 			//missing_ths = append(missing_ths, fmt.Sprintf("\u001b[31mTH%d", th))
 			all_ths = append(all_ths, fmt.Sprintf("\u001b[31mTH%d", th))
