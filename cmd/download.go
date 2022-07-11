@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -50,46 +51,59 @@ var downloadTHCmd = &cobra.Command{
 	Long:  `Red is not downloaded already, green is downloaded already. You can redownload a town hall level by selecting it, and it will be downloaded again overwriting the old data.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-		client, err = coc.New(map[string]string{"dummy1@yopmail.com": "Password"})
-		if err != nil {
-			return err
-		}
 
-		th_level, err = renderViewOfThs()
+		th_level, err = renderViewOfThs("Which Town Hall level do you want to download (Red are not downloaded already)")
 		if err != nil {
 			log.Log.Errorf("Error rendering view of ths: %v", err)
 			return err
 		}
+		if th_level == -1 {
+			log.Log.Error("Exiting gracefully")
+			return nil
+		}
 
 		// check if players-th{th_level}.json exists
-		if _, err := os.Stat(filepath.Join(".", "players-th"+strconv.Itoa(th_level)+".json")); err == nil {
+		if achievementsAlreadyExist() {
 			log.Log.Info("Th" + strconv.Itoa(th_level) + " data already exists, prompting user to overwrite")
 			if !askToOverwrite() {
 				log.Log.Info("Aborting")
 				return nil
 			}
 		}
-		log.Log.Info("Downloading th" + strconv.Itoa(th_level) + " data")
-
-		WgetTags()
-		WgetAchievements()
-
-		fp := fmt.Sprintf("players-th%d.json", th_level)
-		err = saveToFile(fp)
-		if err != nil {
-			log.Log.Errorf("Error saving to file %s: %v", fp, err)
-			return err
-		}
-		log.Log.Info("Done downloading th" + strconv.Itoa(th_level) + " data")
-		return nil
+		
+		return downloadTHToFile()
 	},
 }
 
-func renderViewOfThs() (int, error) {
+func downloadTHToFile() error {
+	var err error
+	log.Log.Info("Downloading th" + strconv.Itoa(th_level) + " data")
+
+	WgetTags()
+	WgetAchievements()
+
+	fp := fmt.Sprintf("players-th%d.json", th_level)
+	err = saveToFile(fp)
+	if err != nil {
+		log.Log.Errorf("Error saving to file %s: %v", fp, err)
+		return err
+	}
+	log.Log.Info("Done downloading th" + strconv.Itoa(th_level) + " data")
+	return nil
+}
+
+func achievementsAlreadyExist() bool {
+	if _, err := os.Stat(filepath.Join(".", "players-th"+strconv.Itoa(th_level)+".json")); err == nil {
+		return true
+	}
+	return false
+}
+
+func renderViewOfThs(_prompt string) (int, error) {
 	ths := GetAvailableThsData()
 
 	all_ths := make([]string, 0)
-	_range := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
+	_range := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1}
 
 	// missing ths should have whats in range and not in ths
 	for _, th := range _range {
@@ -101,6 +115,7 @@ func renderViewOfThs() (int, error) {
 			all_ths = append(all_ths, fmt.Sprintf("\u001b[32mTH%d", th))
 		}
 	}
+	all_ths = append(all_ths, "\u001b[31mExit")
 
 	templates := &promptui.SelectTemplates{
 		Label: "		{{ . }}?",
@@ -113,7 +128,7 @@ func renderViewOfThs() (int, error) {
 			`,
 	}
 	prompt := promptui.Select{
-		Label:     "Which Town Hall level do you want to download (Red are not downloaded already)",
+		Label:     _prompt,
 		Items:     all_ths,
 		Templates: templates,
 		Size:      10,
@@ -126,13 +141,39 @@ func renderViewOfThs() (int, error) {
 	return _range[index], nil
 }
 
+func askToDownload() bool {
+	prompt := promptui.Prompt{
+		Label:     fmt.Sprintf("Do you want to download th%d data?", th_level),
+		IsConfirm: true,
+		Validate: func(input string) error {
+			if input != "y" && input != "Y" && input != "n" && input != "N" {
+				return errors.New("please enter y or n")
+			}
+			return nil
+		},
+	}
+	result, err := prompt.Run()
+	if err != nil {
+		log.Log.Errorf("Error running prompt: %v", err)
+		return false
+	}
+	return result == "y" || result == "Y"
+}
+
 func askToOverwrite() bool {
 	prompt := promptui.Prompt{
 		Label:     fmt.Sprintf("Do you want to overwrite and redownload th%d data?", th_level),
 		IsConfirm: true,
+		Validate: func(input string) error {
+			if input != "y" && input != "Y" && input != "n" && input != "N" {
+				return errors.New("please enter y or n")
+			}
+			return nil
+		},
 	}
 	result, err := prompt.Run()
 	if err != nil {
+		log.Log.Errorf("Error running prompt: %v", err)
 		return false
 	}
 	return result == "y" || result == "Y"

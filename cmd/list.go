@@ -23,7 +23,7 @@ var listFilesCmd = &cobra.Command{
 			fmt.Println("    ", th)
 		}
 
-		return nil
+		return rootCmd.Execute()
 	},
 }
 
@@ -59,5 +59,4 @@ func GetAvailableThsData() []string {
 
 func init() {
 	rootCmd.AddCommand(listFilesCmd)
-
 }
